@@ -1,25 +1,5 @@
 #!/usr/bin/env nextflow
 
-/*
-  Copyright (c) 2020-2021, Ontario Institute for Cancer Research
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-  Authors:
-    Alex Lepsa
-    Junjun Zhang
-*/
-
 nextflow.enable.dsl = 2
 version = '2.6.2'
 
@@ -70,12 +50,12 @@ score_params = [
 ]
 
 
-include { songGetAnalysis as songGet } from './local_modules/song-get-analysis' params(song_params)
-include { scoreDownload as scoreDn } from './local_modules/score-download' params(score_params)
+include { SONG_GET_ANALYSIS as songGet } from '../../../modules/lindaxiang/song_get_analysis/main' params(song_params)
+include { SCORE_DOWNLOAD as scoreDn } from '../../../modules/lindaxiang/score_download/main' params(score_params)
 
 
 // please update workflow code as needed
-workflow SongScoreDownload {
+workflow SONG_SCORE_DOWNLOAD {
   take:  // update as needed
     study_id
     analysis_id
@@ -93,8 +73,35 @@ workflow SongScoreDownload {
 // this provides an entry point for this main script, so it can be run directly without clone the repo
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
-  SongScoreDownload(
+  SONG_SCORE_DOWNLOAD(
     params.study_id,
     params.analysis_id
   )
+}
+
+workflow SONG_SCORE_DOWNLOAD {
+
+    take:
+    // TODO nf-core: edit input (take) channels
+    ch_bam // channel: [ val(meta), [ bam ] ]
+
+    main:
+
+    ch_versions = Channel.empty()
+
+    // TODO nf-core: substitute modules here for the modules of your subworkflow
+
+    SAMTOOLS_SORT ( ch_bam )
+    ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions.first())
+
+    SAMTOOLS_INDEX ( SAMTOOLS_SORT.out.bam )
+    ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions.first())
+
+    emit:
+    // TODO nf-core: edit emitted channels
+    bam      = SAMTOOLS_SORT.out.bam           // channel: [ val(meta), [ bam ] ]
+    bai      = SAMTOOLS_INDEX.out.bai          // channel: [ val(meta), [ bai ] ]
+    csi      = SAMTOOLS_INDEX.out.csi          // channel: [ val(meta), [ csi ] ]
+
+    versions = ch_versions                     // channel: [ versions.yml ]
 }

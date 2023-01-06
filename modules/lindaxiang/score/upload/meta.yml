@@ -1,10 +1,10 @@
-name: "scoreupload"
+name: "score_upload"
 ## TODO nf-core: Add a description of the module and list keywords
 description: write your description here
 keywords:
   - sort
 tools:
-  - "scoreupload":
+  - "score":
       ## TODO nf-core: Add a description and other details for the software below
       description: ""
       homepage: ""
@@ -15,13 +15,7 @@ tools:
 
 ## TODO nf-core: Add a description of all of the variables used as input
 input:
-  # Only when we have meta
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
-  # 
+  #
   ## TODO nf-core: Delete / customise this example input
   - bam:
       type: file
@@ -30,13 +24,7 @@ input:
 
 ## TODO nf-core: Add a description of all of the variables used as output
 output:
-  #Only when we have meta
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
-  # 
+  #
   - versions:
       type: file
       description: File containing software versions
