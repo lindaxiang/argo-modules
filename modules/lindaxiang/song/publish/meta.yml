@@ -1,51 +1,42 @@
 name: "song_publish"
-## TODO nf-core: Add a description of the module and list keywords
 description: write your description here
 keywords:
-  - sort
+  - overture
+  - song
+  - publish
+  - metadata
+  - validation
 tools:
-  - "song":
-      ## TODO nf-core: Add a description and other details for the software below
-      description: ""
-      homepage: ""
-      documentation: ""
-      tool_dev_url: ""
+  - song:
+      description: |
+        SONG is a robust metadata and validation system used to quickly and reliably track genome metadata 
+        scattered across multiple cloud storage systems.
+      homepage: "https://www.overture.bio/products/song/"
+      documentation: "https://song-docs.readthedocs.io/en/develop/introduction.html"
+      tool_dev_url: "https://github.com/overture-stack/SONG"
       doi: ""
-      licence: ""
+      licence: ["MIT"]
 
-## TODO nf-core: Add a description of all of the variables used as input
 input:
-  # Only when we have meta
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
-  #
-  ## TODO nf-core: Delete / customise this example input
-  - bam:
-      type: file
-      description: BAM/CRAM/SAM file
-      pattern: "*.{bam,cram,sam}"
+  - study_id:
+      type: string
+      description: SONG metadata study ID
+  - analysis_id:
+      type: string
+      description: SONG metadata analysis ID
 
-## TODO nf-core: Add a description of all of the variables used as output
 output:
-  #Only when we have meta
-  - meta:
-      type: map
+  - analysis_id:
+      type: string
       description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
-  #
+        SONG metadata analysis ID for the uploaded files
   - versions:
       type: file
       description: File containing software versions
       pattern: "versions.yml"
-  ## TODO nf-core: Delete / customise this example output
-  - bam:
-      type: file
-      description: Sorted BAM/CRAM/SAM file
-      pattern: "*.{bam,cram,sam}"
 
 authors:
-  - "None"
+  - "@lespalex"
+  - "@junjun-zhang"
+  - "@lindaxiang"
+  - "@edsu7"

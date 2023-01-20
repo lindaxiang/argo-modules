@@ -1,83 +1,11 @@
-#!/usr/bin/env nextflow
+//
+// Run SONG/Score clients to upload files
+//
 
-/*
-  Copyright (c) 2020-2021, Ontario Institute for Cancer Research
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-  Authors:
-    Alex Lepsa
-    Junjun Zhang
-*/
-
-nextflow.enable.dsl = 2
-version = '2.9.1'
-
-// universal params go here, change default value as needed
-params.publish_dir = ""  // set to empty string will disable publishDir
-
-params.max_retries = 5  // set to 0 will disable retry
-params.first_retry_wait_time = 1  // in seconds
-
-// tool specific parmas go here, add / change as needed
-params.study_id = "TEST-PR"
-params.payload = "NO_FILE"
-params.upload = []
-params.analysis_id = ""  // optional, analysis must already exist and in UNPUBLISHED state if analysis_id provided
-
-params.api_token = ""
-
-params.song_cpus = 1
-params.song_mem = 1  // GB
-params.song_url = "https://song.rdpc-qa.cancercollaboratory.org"
-params.song_api_token = ""
-params.song_container = "ghcr.io/overture-stack/song-client"
-params.song_container_version = "5.0.2"
-
-params.score_cpus = 1
-params.score_mem = 1  // GB
-params.score_transport_mem = 1  // GB
-params.score_url = "https://score.rdpc-qa.cancercollaboratory.org"
-params.score_api_token = ""
-params.score_container = "ghcr.io/overture-stack/score"
-params.score_container_version = "5.8.1"
-
-song_params = [
-    *:params,
-    'cpus': params.song_cpus,
-    'mem': params.song_mem,
-    'song_url': params.song_url,
-    'song_container': params.song_container,
-    'song_container_version': params.song_container_version,
-    'api_token': params.song_api_token ?: params.api_token
-]
-
-score_params = [
-    *:params,
-    'cpus': params.score_cpus,
-    'mem': params.score_mem,
-    'transport_mem': params.score_transport_mem,
-    'song_url': params.song_url,
-    'score_url': params.score_url,
-    'score_container': params.score_container,
-    'score_container_version': params.score_container_version,
-    'api_token': params.score_api_token ?: params.api_token
-]
-
-include { SONG_SUBMIT as songSub } from '../../../modules/lindaxiang/song_submit/main' params(song_params)
-include { SONG_MANIFEST as songMan } from '../../../modules/lindaxiang/song_manifest/main' params(song_params)
-include { SCORE_UPLOAD as scoreUp } from '../../../modules/lindaxiang/score_upload/main' params(score_params)
-include { SONG_PUBLISH as songPub } from '../../../modules/lindaxiang/song_publish/main' params(song_params)
+include { SONG_SUBMIT as songSub } from '../../../modules/lindaxiang/song/submit/main' 
+include { SONG_MANIFEST as songMan } from '../../../modules/lindaxiang/song/manifest/main' 
+include { SCORE_UPLOAD as scoreUp } from '../../../modules/lindaxiang/score/upload/main' 
+include { SONG_PUBLISH as songPub } from '../../../modules/lindaxiang/song/publish/main' 
 
 
 workflow SONG_SCORE_UPLOAD {
@@ -88,34 +16,28 @@ workflow SONG_SCORE_UPLOAD {
         analysis_id
 
     main:
+        ch_versions = Channel.empty()
+        
         if (!analysis_id) {
           // Create new analysis
           songSub(study_id, payload)
-          analysis_id = songSub.out
+          analysis_id = songSub.out.analysis_id
+          ch_versions = ch_versions.mix(songSub.out.versions)
         }
 
         // Generate file manifest for upload
         songMan(study_id, analysis_id, upload.collect())
+        ch_versions = ch_versions.mix(songMan.out.versions)
 
         // Upload to SCORE
-        scoreUp(analysis_id, songMan.out, upload.collect())
+        scoreUp(analysis_id, songMan.out.manifest, upload.collect())
+        ch_versions = ch_versions.mix(scoreUp.out.versions)
 
         // Publish the analysis
         songPub(study_id, scoreUp.out.ready_to_publish)
+        ch_versions = ch_versions.mix(songPub.out.versions)
 
     emit:
         analysis_id = songPub.out.analysis_id
-}
-
-
-// this provides an entry point for this main script, so it can be run directly without clone the repo
-// using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
-
-workflow {
-  SONG_SCORE_UPLOAD(
-    params.study_id,
-    file(params.payload),
-    Channel.fromPath(params.upload),
-    params.analysis_id
-  )
+        versions = ch_versions                     // channel: [ versions.yml ]
 }

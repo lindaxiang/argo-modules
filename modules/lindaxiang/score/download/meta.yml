@@ -1,39 +1,46 @@
 name: "score_download"
-## TODO nf-core: Add a description of the module and list keywords
-description: write your description here
+description: Overture SCORE clients for downloading of files and metadata.
 keywords:
-  - sort
+  - overture
+  - score-client
+  - download
 tools:
   - "score":
-      ## TODO nf-core: Add a description and other details for the software below
-      description: ""
-      homepage: ""
-      documentation: ""
-      tool_dev_url: ""
+      description: |
+        Score facilitates the transfer and storage of your data seamlessly for cloud-based projects. 
+        File bundling, resumable downloads, and BAM/CRAM slicing make data transfer fast and smooth.
+      homepage: "https://www.overture.bio/products/score/"
+      documentation: "https://score-docs.readthedocs.io/en/develop/index.html"
+      tool_dev_url: "https://github.com/overture-stack/score"
       doi: ""
-      licence: ""
+      licence: ["MIT"]
 
-## TODO nf-core: Add a description of all of the variables used as input
 input:
-  #
-  ## TODO nf-core: Delete / customise this example input
-  - bam:
+  - analysis:
       type: file
-      description: BAM/CRAM/SAM file
-      pattern: "*.{bam,cram,sam}"
+      description: SONG metadata JSON file 
+  - study_id:
+      type: string
+      description: SONG metadata study ID
+  - analysis_id:
+      type: string
+      description: SONG metadata analysis ID
 
-## TODO nf-core: Add a description of all of the variables used as output
 output:
-  #
+  - analysis_json:
+      type: file
+      description: SONG metadata JSON file for downloaded files
+  - files:
+      type: file
+      description: List of downloaded files
+      pattern: "out/*"
   - versions:
       type: file
       description: File containing software versions
       pattern: "versions.yml"
-  ## TODO nf-core: Delete / customise this example output
-  - bam:
-      type: file
-      description: Sorted BAM/CRAM/SAM file
-      pattern: "*.{bam,cram,sam}"
 
 authors:
-  - "None"
+  - "@lespalex"
+  - "@junjun-zhang"
+  - "@lindaxiang"
+  - "@edsu7"

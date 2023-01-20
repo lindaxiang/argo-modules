@@ -2,10 +2,10 @@ process SONG_GET {
     tag "${analysis_id}"
     label 'process_single'
 
-    maxRetries task.ext.max_retries
+    maxRetries "${task.ext.max_retries}"
     errorStrategy {
         sleep(Math.pow(2, task.attempt) * task.ext.first_retry_wait_time * 1000 as long);  // backoff time increases exponentially before each retry
-        return task.ext.max_retries ? 'retry' : 'finish'
+        return "${task.ext.max_retries}" ? 'retry' : 'finish'
     }
 
     pod = [secret: workflow.runName + "-secret", mountPath: "/tmp/rdpc_secret"]
